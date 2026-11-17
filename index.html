@@ -1,15 +1,1513 @@
+     <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FACTORY PULSE | Industrial Line Telemetry & Ripple Effect Detector</title>
+  <meta name="description" content="Modular multi-frame factory monitoring, dependency-based delay propagation, and role-based access control system.">
+  <link rel="stylesheet" href="style.css">
+  <!-- Google Fonts for sleek industrial typography (with system fallbacks) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="dark-theme">
+  <!-- Ambient Top Glow Overlay -->
+  <div class="ambient-glow" aria-hidden="true"></div>
+
+  <!-- =========================================================================
+       1. AUTHENTICATION / ROLE SELECTION PORTAL (Worker vs Plant Head)
+       ========================================================================= -->
+  <div class="login-portal-backdrop" id="loginPortal">
+    <div class="login-terminal-card">
+
+      <!-- ── HERO BRAND SECTION ── -->
+      <div class="login-hero-section">
+        <div class="login-hero-top-bar">
+          <span class="login-facility-tag">⬡ FACILITY 04 // SECURE TERMINAL</span>
+          <div class="login-status-chip">
+            <span class="status-pulse-dot"></span> SYSTEM ONLINE
+          </div>
+        </div>
+
+        <div class="login-brand-block">
+          <div class="login-brand-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="40" height="40">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+            </svg>
+          </div>
+          <div class="login-brand-text-block">
+            <h1 class="login-brand-title">
+              <span class="login-brand-factory">FACTORY</span><span class="login-brand-pulse">PULSE</span>
+            </h1>
+            <p class="login-brand-tagline">Detect Hidden Production Problems Before They Spread</p>
+          </div>
+        </div>
+
+        <div class="login-divider-line"></div>
+      </div>
+      <!-- ── END HERO ── -->
+
+      <div class="login-portal-body">
+        <p class="login-subtitle">
+          Select an authorized operational clearance profile to access the synchronized production telemetry line:
+        </p>
+
+        <!-- Role Selection Cards -->
+        <div class="role-cards-grid">
+          <!-- Card 1: Floor Worker / Operator -->
+          <div class="role-card" id="cardRoleWorker" data-role="worker">
+            <div class="role-header">
+              <div class="role-avatar-icon role-worker-icon">👷</div>
+              <div class="role-info">
+                <span class="role-tag tag-worker">CLEARANCE: LEVEL 1</span>
+                <h3 class="role-name">Floor Operator</h3>
+                <span class="role-id">Badge #OP-4082</span>
+              </div>
+            </div>
+            <p class="role-desc">
+              Assembly floor technician access. Real-time machine status, WIP buffer monitoring, cycle time inspection, and operational alert feeds.
+            </p>
+            <ul class="role-perms-list">
+              <li><span class="text-green">✔</span> Live Machine Telemetry &amp; Specs</li>
+              <li><span class="text-green">✔</span> WIP Buffer Tracking &amp; Starvation Alarms</li>
+              <li><span class="text-green">✔</span> View-Only Simulator &amp; Downstream Matrix</li>
+              <li><span class="text-muted">✖ Administrative Parameter Overrides</span></li>
+            </ul>
+            <button class="btn-role-select btn-role-worker" id="btnSelectWorker">
+              <span>Sign in as Operator</span>
+              <span class="arrow-glyph">➔</span>
+            </button>
+          </div>
+
+          <!-- Card 2: Plant Head / Manager -->
+          <div class="role-card role-card-head" id="cardRoleHead" data-role="head">
+            <div class="role-header">
+              <div class="role-avatar-icon role-head-icon">👔</div>
+              <div class="role-info">
+                <span class="role-tag tag-head">CLEARANCE: LEVEL 3 (FULL)</span>
+                <h3 class="role-name">Plant Operations Head</h3>
+                <span class="role-id">Badge #MGR-1001</span>
+              </div>
+            </div>
+            <p class="role-desc">
+              Chief operations engineer &amp; plant manager. Full administrative control, What-If simulation injection, root-cause rewinds, and audit briefs.
+            </p>
+            <ul class="role-perms-list">
+              <li><span class="text-green">✔</span> Unrestricted Disruption Simulator</li>
+              <li><span class="text-green">✔</span> Root Cause Diagnostic Back-Tracing</li>
+              <li><span class="text-green">✔</span> Incident Briefing Generation &amp; PDF Export</li>
+              <li><span class="text-green">✔</span> Telemetry CSV Audit Export &amp; Line Reset</li>
+            </ul>
+            <button class="btn-role-select btn-role-head" id="btnSelectHead">
+              <span>Sign in as Plant Head</span>
+              <span class="arrow-glyph">➔</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom Credentials Toggle (For Standard Form Login) -->
+        <div class="login-custom-section">
+          <div class="login-divider">
+            <span>OR MANUAL CREDENTIAL AUTHENTICATION</span>
+          </div>
+          <form id="manualLoginForm" class="manual-login-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="inputUsername" class="form-label">Operator ID / Email:</label>
+                <input type="text" id="inputUsername" class="form-input" placeholder="e.g. m.vance@plant.io" value="head@plant.alpha">
+              </div>
+              <div class="form-group">
+                <label for="inputPassword" class="form-label">Security Passcode:</label>
+                <input type="password" id="inputPassword" class="form-input" placeholder="••••••••" value="demo1234">
+              </div>
+              <div class="form-group">
+                <label for="selectLoginRole" class="form-label">Target Role:</label>
+                <select id="selectLoginRole" class="form-select">
+                  <option value="head" selected>Plant Operations Head (Admin)</option>
+                  <option value="worker">Floor Worker (Operator)</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary-glow btn-manual-submit">
+              <span>AUTHENTICATE &amp; ENTER TERMINAL</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="login-terminal-footer">
+        <span class="footer-note">⚡ Plant Alpha Automated SCADA Network • Authorized Personnel Only</span>
+        <span class="footer-note">Simulated Hackathon Demo Gateway</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       2. MAIN APPLICATION SHELL (Visible After Authentication)
+       ========================================================================= -->
+  <div class="app-shell" id="appShell" style="display: none;">
+
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-container">
+        <div class="brand-group">
+          <div class="brand-logo">
+            <div class="pulse-icon-wrapper">
+              <svg class="pulse-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+              </svg>
+              <span class="pulse-glow-ring"></span>
+            </div>
+            <div class="brand-text">
+              <div class="brand-title">
+                <span class="brand-name">FACTORY</span><span class="brand-accent">PULSE</span>
+                <span class="brand-badge">PRO v2.4</span>
+              </div>
+              <p class="brand-tagline">Detect Hidden Production Problems Before They Spread</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Telemetry Badge -->
+        <div class="system-telemetry-badge">
+          <div class="telemetry-item">
+            <span class="telemetry-label">FACILITY</span>
+            <span class="telemetry-value">PLANT ALPHA // LINE 04</span>
+          </div>
+          <div class="telemetry-divider"></div>
+          <div class="telemetry-item">
+            <span class="telemetry-label">SHIFT</span>
+            <span class="telemetry-value" id="liveShiftClock">08:42:15 UTC</span>
+          </div>
+          <div class="telemetry-divider"></div>
+          <div class="telemetry-item">
+            <span class="status-pulse-dot" id="systemHeartbeatDot"></span>
+            <span class="telemetry-status" id="systemEngineStatus">ONLINE // ACTIVE</span>
+          </div>
+        </div>
+
+        <!-- User Role Profile & Header Actions -->
+        <div class="header-actions">
+          <!-- Active User Profile Chip -->
+          <div class="user-profile-chip" id="userProfileChip">
+            <span class="user-avatar" id="headerUserAvatar">👔</span>
+            <div class="user-info-text">
+              <span class="user-name" id="headerUserName">Dr. Marcus Vance</span>
+              <span class="user-role-badge badge-head" id="headerUserRoleBadge">PLANT HEAD</span>
+            </div>
+            <button class="btn-logout" id="btnLogout" title="Switch Role / Return to Gateway Portal">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Quick 1-Click Role Switcher for Hackathon Demonstration -->
+          <button class="btn-role-switcher" id="btnRoleSwitcher" title="Switch between Plant Head and Operator role instantly [Key: U]">
+            <span id="roleSwitcherIcon">🔄</span>
+            <span id="roleSwitcherText">Switch to Operator View</span>
+          </button>
+
+          <!-- Keynote Pitch Deck Presentation -->
+          <a href="presentation.html" target="_blank" class="btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; font-size: 0.82rem; font-weight: 700; background: linear-gradient(135deg, #00f0ff, #0077ff); color: #04060a; border-radius: 6px; box-shadow: 0 0 15px rgba(0,240,255,0.4);" title="Open Judges Keynote Pitch Deck [10 Interactive Slides]">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            Pitch Deck ↗
+          </a>
+
+          <button id="toggleTickerBtn" class="btn-icon" title="Toggle Real-Time Conveyor Unit Flow Simulation">
+            <span class="status-pulse-dot" id="tickerDot" style="width: 7px; height: 7px;"></span>
+            <span id="tickerStatusText">FLOW: ON</span>
+          </button>
+
+          <button id="toggleAudioBtn" class="btn-icon" title="Toggle Audio Synthesizer Feedback">
+            <svg id="audioIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            </svg>
+            <span id="audioStatusText">SFX: ON</span>
+          </button>
+
+          <!-- HEAD-ONLY: Notifications / Access Requests Inbox -->
+          <button class="btn-head-inbox" id="btnHeadInbox" style="display:none;" title="Operator Access Requests">
+            📬 Requests <span class="notif-count-pill" id="inboxCount">0</span>
+          </button>
+
+          <button id="exportCsvBtn" class="btn-secondary" title="Export all telemetry and disruption data to CSV">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            CSV
+          </button>
+
+          <button id="quickResetBtn" class="btn-danger-outline" title="Reset all simulations to nominal factory state [Key: R]">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+              <polyline points="3 3 3 8 8 8"></polyline>
+            </svg>
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- Multi-Frame Navigation Tabs Bar -->
+      <nav class="nav-tabs-bar">
+        <div class="nav-tabs-container">
+          <button class="nav-tab active" data-frame="frameOverview">
+            <span class="nav-tab-icon">◈</span>
+            <span>Dashboard Overview</span>
+          </button>
+          <button class="nav-tab" data-frame="frameProductionLine">
+            <span class="nav-tab-icon">⮞</span>
+            <span>Production Line</span>
+          </button>
+          <button class="nav-tab" data-frame="frameRippleAnalysis">
+            <span class="nav-tab-icon">◎</span>
+            <span>Ripple Detector</span>
+            <span class="tab-badge">FLAGSHIP</span>
+          </button>
+          <button class="nav-tab" data-frame="frameSimulator">
+            <span class="nav-tab-icon">⚙</span>
+            <span>What-If Simulator</span>
+          </button>
+          <button class="nav-tab" data-frame="frameRootCause">
+            <span class="nav-tab-icon">⚡</span>
+            <span>Root Cause Rewind</span>
+          </button>
+          <button class="nav-tab" data-frame="frameAnalytics">
+            <span class="nav-tab-icon">📊</span>
+            <span>Telemetry Charts</span>
+          </button>
+          <button class="nav-tab" data-frame="frameAlerts">
+            <span class="nav-tab-icon">⚠</span>
+            <span>Early Warnings</span>
+            <span class="alert-count-pill" id="navAlertCount">0</span>
+          </button>
+          <button class="nav-tab" data-frame="frameReports">
+            <span class="nav-tab-icon">📋</span>
+            <span>Incident Reports</span>
+          </button>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Demo Scenarios & Judge Tour Bar -->
+    <section class="scenarios-bar">
+      <div class="scenarios-container">
+        <div class="scenarios-title">
+          <span class="scenarios-icon">🚀</span>
+          <span class="scenarios-heading">DEMO SCENARIOS:</span>
+          <span class="scenarios-sub">1-Click Shop-Floor Conditions for Judges</span>
+        </div>
+        <div class="scenario-buttons-group">
+          <button class="btn-scenario active" id="btnScenarioA" data-scenario="A" title="Load Normal Factory Condition [Key: A]">
+            <span class="scenario-dot dot-green"></span>
+            <span class="scenario-name">Scenario A: Normal Line</span>
+            <span class="scenario-desc">100% Flow • Balanced</span>
+          </button>
+          <button class="btn-scenario" id="btnScenarioB" data-scenario="B" title="Load M2 Delay Condition [Key: B]">
+            <span class="scenario-dot dot-yellow"></span>
+            <span class="scenario-name">Scenario B: M2 Delay</span>
+            <span class="scenario-desc">+40% Cycle Time • Stamping</span>
+          </button>
+          <button class="btn-scenario" id="btnScenarioC" data-scenario="C" title="Load M3 Bottleneck Condition [Key: C]">
+            <span class="scenario-dot dot-red"></span>
+            <span class="scenario-name">Scenario C: M3 Bottleneck</span>
+            <span class="scenario-desc">+50% Assembly Halt • Severe Ripple</span>
+          </button>
+          <button class="btn-scenario" id="btnScenarioD" data-scenario="D" title="Load M5 Jam Condition [Key: D]">
+            <span class="scenario-dot dot-purple"></span>
+            <span class="scenario-name">Scenario D: M5 Jam</span>
+            <span class="scenario-desc">+65% Packaging Backpressure</span>
+          </button>
+          <button class="btn-scenario" id="btnScenarioE" data-scenario="E" title="Load M2 Thermal Overheat Condition [Key: E]">
+            <span class="scenario-dot dot-orange"></span>
+            <span class="scenario-name">Scenario E: M2 Overheat</span>
+            <span class="scenario-desc">+88°C Sump • Thermal Ripple</span>
+          </button>
+        </div>
+
+        <!-- Judge Interactive Tour Launcher -->
+        <div class="tour-launcher-group">
+          <button class="btn-judge-tour" id="btnStartJudgeTour" title="Launch Interactive Guided Presentation Walkthrough for Judges [Key: T]">
+            <span class="tour-icon">🎯</span>
+            <span class="tour-text">JUDGE WALKTHROUGH TOUR</span>
+            <span class="tour-badge">GUIDED</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         3. SEPARATE DEDICATED FRAMES CONTAINER (Clean Multi-Frame Architecture)
+         ========================================================================= -->
+    <main class="frames-main-container">
+
+      <!-- =====================================================================
+           FRAME 1: DASHBOARD OVERVIEW
+           ===================================================================== -->
+      <section class="app-frame active" id="frameOverview">
+        <div class="frame-banner">
+          <div class="frame-banner-text">
+            <span class="frame-tag">FRAME 1 // EXECUTIVE OVERVIEW</span>
+            <h2 class="frame-title">Factory Floor Overview &amp; OEE Matrix</h2>
+            <p class="frame-desc">Synchronized production metrics, machine status matrix, and ISO 22400 standard efficiency breakdown.</p>
+          </div>
+          <div class="frame-banner-meta">
+            <span class="meta-tag" id="activeScenarioTag">Active: Scenario A (Nominal Baseline)</span>
+            <span class="meta-tag" id="roleAccessTag">Access: Plant Head (Unrestricted)</span>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card" id="cardTotalMachines">
+            <div class="kpi-header">
+              <span class="kpi-label">TOTAL MONITORED MACHINES</span>
+              <span class="kpi-icon">⚙</span>
+            </div>
+            <div class="kpi-value-row">
+              <span class="kpi-number" id="metricTotalMachines">5</span>
+              <span class="kpi-unit">UNITS</span>
+            </div>
+            <div class="kpi-subtext">Continuous Stage Pipeline</div>
+            <div class="kpi-progress-bar"><div class="kpi-progress-fill fill-cyan" style="width: 100%;"></div></div>
+          </div>
+
+          <div class="kpi-card" id="cardMachinesNormal">
+            <div class="kpi-header">
+              <span class="kpi-label">OPERATING NORMALLY</span>
+              <span class="kpi-icon text-green">✔</span>
+            </div>
+            <div class="kpi-value-row">
+              <span class="kpi-number text-green" id="metricNormalMachines">5</span>
+              <span class="kpi-unit">/ 5 STAGES</span>
+            </div>
+            <div class="kpi-subtext" id="metricNormalPercent">100% nominal cycle time</div>
+            <div class="kpi-progress-bar"><div class="kpi-progress-fill fill-green" id="fillNormalMachines" style="width: 100%;"></div></div>
+          </div>
+
+          <div class="kpi-card" id="cardMachinesDelayed">
+            <div class="kpi-header">
+              <span class="kpi-label">PRIMARY DISRUPTIONS</span>
+              <span class="kpi-icon text-red">⚠</span>
+            </div>
+            <div class="kpi-value-row">
+              <span class="kpi-number text-red" id="metricDelayedMachines">0</span>
+              <span class="kpi-unit">ORIGINS</span>
+            </div>
+            <div class="kpi-subtext" id="metricDelayedDesc">Zero active root anomalies</div>
+            <div class="kpi-progress-bar"><div class="kpi-progress-fill fill-red" id="fillDelayedMachines" style="width: 0%;"></div></div>
+          </div>
+
+          <div class="kpi-card" id="cardMachinesAtRisk">
+            <div class="kpi-header">
+              <span class="kpi-label">DOWNSTREAM AT RISK</span>
+              <span class="kpi-icon text-yellow">◎</span>
+            </div>
+            <div class="kpi-value-row">
+              <span class="kpi-number text-yellow" id="metricAtRiskMachines">0</span>
+              <span class="kpi-unit">STARVED/THROTTLED</span>
+            </div>
+            <div class="kpi-subtext" id="metricAtRiskDesc">Zero ripple starvation</div>
+            <div class="kpi-progress-bar"><div class="kpi-progress-fill fill-yellow" id="fillAtRiskMachines" style="width: 0%;"></div></div>
+          </div>
+
+          <div class="kpi-card" id="cardEfficiency">
+            <div class="kpi-header">
+              <span class="kpi-label">LINE EFFICIENCY (OEE)</span>
+              <span class="kpi-icon text-cyan">⚡</span>
+            </div>
+            <div class="kpi-value-row">
+              <span class="kpi-number text-cyan" id="metricEfficiency">100.0</span>
+              <span class="kpi-unit">%</span>
+            </div>
+            <div class="kpi-subtext" id="metricEfficiencyDelta">±0.0% vs Nominal Line Pace</div>
+            <div class="kpi-progress-bar"><div class="kpi-progress-fill fill-cyan" id="fillEfficiency" style="width: 100%;"></div></div>
+          </div>
+
+          <div class="kpi-card" id="cardOutput">
+            <div class="kpi-header">
+              <span class="kpi-label">HOURLY LINE OUTPUT</span>
+              <span class="kpi-icon text-blue">📦</span>
+            </div>
+            <div class="kpi-value-row">
+              <span class="kpi-number text-blue" id="metricHourlyOutput">200</span>
+              <span class="kpi-unit">UNITS / HR</span>
+            </div>
+            <div class="kpi-subtext" id="metricOutputDiff">Nominal Target: 200 UPH</div>
+            <div class="kpi-progress-bar"><div class="kpi-progress-fill fill-blue" id="fillHourlyOutput" style="width: 100%;"></div></div>
+          </div>
+        </div>
+
+        <!-- OEE Industrial Triple Breakdown Strip -->
+        <div class="oee-breakdown-bar">
+          <div class="oee-formula-badge">
+            <span class="oee-formula-title">ISO 22400 / INDUSTRIAL OEE EQUATION</span>
+            <span class="oee-formula-eq">Availability × Performance × Quality = Total Line OEE</span>
+          </div>
+          <div class="oee-factors-grid">
+            <div class="oee-factor-item">
+              <div class="oee-factor-header">
+                <span class="oee-factor-name">Availability (Uptime)</span>
+                <span class="oee-factor-val text-green" id="oeeAvailability">99.2%</span>
+              </div>
+              <div class="oee-mini-bar"><div class="oee-mini-fill fill-green" style="width: 99.2%;"></div></div>
+              <span class="oee-factor-sub">Zero unplanned mechanical stops</span>
+            </div>
+            <div class="oee-multiplier">×</div>
+            <div class="oee-factor-item">
+              <div class="oee-factor-header">
+                <span class="oee-factor-name">Performance (Line Pace)</span>
+                <span class="oee-factor-val text-cyan" id="oeePerformance">100.0%</span>
+              </div>
+              <div class="oee-mini-bar"><div class="oee-mini-fill fill-cyan" id="oeePerformanceBar" style="width: 100%;"></div></div>
+              <span class="oee-factor-sub" id="oeePerformanceSub">Governed by bottleneck speed</span>
+            </div>
+            <div class="oee-multiplier">×</div>
+            <div class="oee-factor-item">
+              <div class="oee-factor-header">
+                <span class="oee-factor-name">Quality (AOI Yield)</span>
+                <span class="oee-factor-val text-green" id="oeeQuality">99.6%</span>
+              </div>
+              <div class="oee-mini-bar"><div class="oee-mini-fill fill-green" style="width: 99.6%;"></div></div>
+              <span class="oee-factor-sub">0.4% optical defect diversion</span>
+            </div>
+            <div class="oee-multiplier">=</div>
+            <div class="oee-factor-item oee-factor-total">
+              <div class="oee-factor-header">
+                <span class="oee-factor-name">World-Class OEE</span>
+                <span class="oee-factor-val text-cyan" id="oeeComposite">84.8%</span>
+              </div>
+              <div class="oee-mini-bar"><div class="oee-mini-fill fill-cyan" id="oeeCompositeBar" style="width: 84.8%;"></div></div>
+              <span class="oee-factor-sub" id="oeeRatingSub">Benchmark &gt;85% World-Class</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- HEAD-ONLY: Command Center (Financial P&L, Speed Governor, Maintenance) -->
+        <div class="head-command-center" id="headCommandCenter" style="display:none;">
+          <div class="hcc-header">
+            <div class="hcc-title-row">
+              <div style="display:flex; align-items:center; gap:0.75rem;">
+                <span class="hcc-badge">🔐 PLANT HEAD COMMAND CENTER</span>
+                <span class="hcc-sub">Executive Controls — Restricted Clearance Level 3</span>
+              </div>
+              <button class="btn-primary-glow" id="btnHccOpenInbox" style="padding:0.4rem 0.95rem; font-size:0.78rem; display:inline-flex; align-items:center; gap:0.45rem;">
+                📬 Operator Requests Inbox (<span id="hccInboxCount">0</span>)
+              </button>
+            </div>
+          </div>
+
+          <!-- Financial P&L Strip -->
+          <div class="hcc-section">
+            <div class="hcc-section-title">📊 Real-Time Financial P&amp;L Dashboard</div>
+            <div class="hcc-financial-grid">
+              <div class="hcc-fin-box">
+                <span class="hcc-fin-label">PROJECTED SHIFT REVENUE</span>
+                <span class="hcc-fin-value text-green" id="hccRevenue">$340,000</span>
+                <span class="hcc-fin-sub">@ $85/unit × 200 UPH × 20h shift</span>
+              </div>
+              <div class="hcc-fin-box">
+                <span class="hcc-fin-label">UNITS LOST (DISRUPTION COST)</span>
+                <span class="hcc-fin-value text-red" id="hccLostCost">$0</span>
+                <span class="hcc-fin-sub" id="hccLostSub">No disruption active</span>
+              </div>
+              <div class="hcc-fin-box">
+                <span class="hcc-fin-label">SHIFT TARGET vs ACTUAL</span>
+                <span class="hcc-fin-value text-cyan" id="hccTargetVsActual">200 / 200 UPH</span>
+                <span class="hcc-fin-sub" id="hccTargetSub">On target — 0% variance</span>
+              </div>
+              <div class="hcc-fin-box">
+                <span class="hcc-fin-label">LABOR EFFICIENCY INDEX</span>
+                <span class="hcc-fin-value text-yellow" id="hccLaborEff">98.4%</span>
+                <span class="hcc-fin-sub">3 operators on floor / Shift A</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Line Speed Governor -->
+          <div class="hcc-section">
+            <div class="hcc-section-title">⚙ Line Speed Governor — Administrative Override</div>
+            <div class="hcc-governor-row">
+              <button class="btn-governor btn-gov-slow" data-speed="75" id="govSlow">🐢 Slow (75%)</button>
+              <button class="btn-governor btn-gov-normal active" data-speed="100" id="govNormal">✅ Normal (100%)</button>
+              <button class="btn-governor btn-gov-burst" data-speed="120" id="govBurst">⚡ Burst (120%)</button>
+              <button class="btn-governor btn-gov-stop" data-speed="0" id="govStop">🛑 Emergency Stop</button>
+              <span class="governor-status-pill" id="governorStatus">LINE SPEED: 100%</span>
+            </div>
+          </div>
+
+          <!-- Maintenance Scheduler -->
+          <div class="hcc-section">
+            <div class="hcc-section-title">🔧 Preventive Maintenance Scheduler (Next PM Dates)</div>
+            <div class="hcc-pm-table-wrap">
+              <table class="hcc-pm-table">
+                <thead><tr><th>Machine</th><th>Last PM</th><th>Next Scheduled PM</th><th>Wear Status</th><th>Action</th></tr></thead>
+                <tbody>
+                  <tr><td>M1 — CNC Laser Cutter</td><td>Nov 10, 2026</td><td class="text-yellow">Nov 24, 2026</td><td><span class="wear-pill wear-good">Good (14%)</span></td><td><button class="btn-pm-action" onclick="window._hccSchedulePM('M1')">Schedule</button></td></tr>
+                  <tr><td>M2 — Hydraulic Press</td><td>Nov 05, 2026</td><td class="text-red">Nov 19, 2026</td><td><span class="wear-pill wear-warn">Moderate (28%)</span></td><td><button class="btn-pm-action" onclick="window._hccSchedulePM('M2')">Schedule</button></td></tr>
+                  <tr><td>M3 — Robotic Assembly</td><td>Nov 12, 2026</td><td class="text-green">Dec 02, 2026</td><td><span class="wear-pill wear-good">Good (8%)</span></td><td><button class="btn-pm-action" onclick="window._hccSchedulePM('M3')">Schedule</button></td></tr>
+                  <tr><td>M4 — AOI Inspection</td><td>Nov 08, 2026</td><td class="text-green">Dec 06, 2026</td><td><span class="wear-pill wear-good">Good (5%)</span></td><td><button class="btn-pm-action" onclick="window._hccSchedulePM('M4')">Schedule</button></td></tr>
+                  <tr><td>M5 — Palletizer</td><td>Nov 01, 2026</td><td class="text-red">Nov 18, 2026</td><td><span class="wear-pill wear-crit">High (61%)</span></td><td><button class="btn-pm-action" onclick="window._hccSchedulePM('M5')">Schedule</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- OPERATOR-ONLY: Shift Workstation Dashboard (Visible only to Floor Operator) -->
+        <div class="worker-shift-dashboard" id="workerShiftDashboard" style="display:none;">
+          <div class="wsd-header">
+            <div class="wsd-title-group" style="display:flex; align-items:center; gap:0.75rem;">
+              <span class="wsd-badge">👷 SHIFT TECHNICIAN WORKSTATION</span>
+              <span style="font-family: var(--font-mono); font-size:0.75rem; color: var(--text-muted);">Floor Station: Bay 4-B // Alex Chen (#OP-4082)</span>
+            </div>
+            <button class="btn-primary-small" id="btnPingHeadFromWorkstation" style="padding:0.35rem 0.85rem; font-size:0.75rem;">
+              💬 Ping Plant Head on Intercom
+            </button>
+          </div>
+
+          <div class="wsd-grid">
+            <div class="wsd-card">
+              <div class="wsd-card-title">📋 Shift Standard Operating Procedures</div>
+              <ul class="wsd-checklist">
+                <li><span class="wsd-check">✔</span> 07:00 Mechanical Guard Interlock Checks</li>
+                <li><span class="wsd-check">✔</span> 08:30 M1 CNC Laser Optics Calibration</li>
+                <li><span class="wsd-uncheck">⏳</span> 12:00 Intermediate Buffer Balancing (M2 ➔ M3)</li>
+                <li><span class="wsd-uncheck">⏳</span> 15:30 Handover Telemetry Log Submission</li>
+              </ul>
+            </div>
+
+            <div class="wsd-card">
+              <div class="wsd-card-title">🔍 Active Machine Assignments</div>
+              <div style="font-size:0.78rem; color:var(--text-secondary); line-height:1.5;">
+                <div>Primary Responsibility: <strong class="text-cyan">M2 Hydraulic Stamping</strong></div>
+                <div>Secondary Backup: <strong class="text-cyan">M3 Component Assembly</strong></div>
+                <div style="margin-top:0.4rem; padding-top:0.4rem; border-top:1px solid rgba(255,255,255,0.06); color:var(--text-muted);">
+                  Emergency E-Stop Button: <strong>Conveyor Control Pillar 4</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="wsd-card">
+              <div class="wsd-card-title">📦 Batch Material Traceability</div>
+              <div style="font-size:0.78rem; color:var(--text-secondary); line-height:1.5;">
+                <div>Alloy Lot: <span class="text-green font-mono">#AL-9924-T6</span></div>
+                <div>Incoming Feed Rate: <span class="font-mono">240 Blanks/hr</span></div>
+                <div>Optical Defect Divert: <span class="text-green font-mono">0.38% (Normal)</span></div>
+                <div style="margin-top:0.4rem; color:var(--text-cyan); font-weight:600;">
+                  Clearance Level: 1 (Read Telemetry Only)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Frame Quick Switch Navigation Pills -->
+        <div class="frame-quick-nav">
+          <span class="quick-nav-label">Quick Jump:</span>
+          <button class="btn-quick-jump" data-frame="frameProductionLine">Inspect Production Line ➔</button>
+          <button class="btn-quick-jump" data-frame="frameRippleAnalysis">Launch Ripple Analysis ➔</button>
+          <button class="btn-quick-jump" data-frame="frameSimulator">Open What-If Simulator ➔</button>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           FRAME 2: INTERACTIVE PRODUCTION LINE PIPELINE
+           ===================================================================== -->
+      <section class="app-frame" id="frameProductionLine">
+        <div class="frame-banner">
+          <div class="frame-banner-text">
+            <span class="frame-tag">FRAME 2 // TOPOLOGY &amp; WORKFLOW</span>
+            <h2 class="frame-title">Interactive Production Line Pipeline</h2>
+            <p class="frame-desc">Continuous material conduit flow from Machine 1 to Machine 5 with dynamic WIP buffers and flow conduits.</p>
+          </div>
+          <div class="line-legend">
+            <span class="legend-item"><span class="legend-color legend-green"></span> Normal Flow (&lt;10%)</span>
+            <span class="legend-item"><span class="legend-color legend-yellow"></span> Throttled (10-40%)</span>
+            <span class="legend-item"><span class="legend-color legend-red"></span> Bottleneck / Starved (&gt;40%)</span>
+          </div>
+        </div>
+
+        <div class="production-pipeline-container">
+          <div class="pipeline-track" id="pipelineTrack">
+            <!-- Dynamically populated by script.js -->
+          </div>
+        </div>
+
+        <div class="pipeline-instructions-hint">
+          <span class="hint-icon">💡</span>
+          <span>Click any machine above to inspect its real-time telemetry, buffer queues, and test individual slowdowns in the Inspector Drawer.</span>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           FRAME 3: RIPPLE EFFECT DETECTOR (FLAGSHIP FEATURE)
+           ===================================================================== -->
+      <section class="app-frame" id="frameRippleAnalysis">
+        <div class="frame-banner">
+          <div class="frame-banner-text">
+            <span class="frame-tag frame-tag-hot">FRAME 3 // CORE INNOVATION</span>
+            <h2 class="frame-title text-electric">Ripple Effect Detector</h2>
+            <p class="frame-desc">Dependency-based delay propagation engine tracking causal knock-on effects across downstream stages.</p>
+          </div>
+          <div class="ripple-controls-header">
+            <button id="btnTriggerRipplePulse" class="btn-ripple-wave" title="Trigger propagation wave pulse animation [Spacebar]">
+              <span class="ripple-wave-icon">◎</span>
+              <span>Simulate Propagation Wave</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="ripple-grid">
+          <div class="ripple-card ripple-chain-card">
+            <div class="card-inner-header">
+              <div class="card-title-group">
+                <span class="card-icon">🔗</span>
+                <h3 class="card-title">Causal Dependency Propagation Chain</h3>
+              </div>
+              <span class="ripple-status-pill" id="rippleStatusPill">NO DISRUPTION DETECTED</span>
+            </div>
+
+            <div class="propagation-visualizer" id="propagationVisualizer">
+              <!-- Rendered by JS -->
+            </div>
+
+            <div class="propagation-physics-box" id="propagationPhysicsBox">
+              <div class="physics-header">
+                <span class="physics-badge">SIMULATION LOGIC</span>
+                <span class="physics-title">Manufacturing Line Balancing Physics</span>
+              </div>
+              <p class="physics-text" id="physicsExplanationText">
+                In a balanced sequential manufacturing line, machines rely on upstream output. When a stage slows down, downstream machines cannot process workpieces faster than the bottleneck feeding them, resulting in material starvation, buffer depletion, and reduced line throughput.
+              </p>
+            </div>
+          </div>
+
+          <div class="ripple-card ripple-matrix-card">
+            <div class="card-inner-header">
+              <div class="card-title-group">
+                <span class="card-icon">📋</span>
+                <h3 class="card-title">Downstream Dependency Impact Matrix</h3>
+              </div>
+              <span class="matrix-timestamp" id="matrixTimestamp">Updated: Just Now</span>
+            </div>
+
+            <div class="table-responsive">
+              <table class="ripple-matrix-table" id="rippleMatrixTable">
+                <thead>
+                  <tr>
+                    <th>Machine ID</th>
+                    <th>Stage Role</th>
+                    <th>Flow Status</th>
+                    <th>Est. Cycle Time</th>
+                    <th>Idle / Starve Risk</th>
+                    <th>Buffer Depletion</th>
+                  </tr>
+                </thead>
+                <tbody id="rippleMatrixBody">
+                  <!-- Dynamically filled by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           FRAME 4: WHAT-IF DISRUPTION SIMULATOR
+           ===================================================================== -->
+      <section class="app-frame" id="frameSimulator">
+        <div class="frame-banner">
+          <div class="frame-banner-text">
+            <span class="frame-tag">FRAME 4 // EXPERIMENTAL SANDBOX</span>
+            <h2 class="frame-title">What-If Disruption Simulator</h2>
+            <p class="frame-desc">Inject simulated machine slowdowns, adjust intermediate WIP buffers, and observe line-wide impacts.</p>
+          </div>
+          <div class="simulator-mode-indicator">
+            <span class="mode-pill active" id="simAccessModePill">ADMINISTRATIVE SANDBOX</span>
+          </div>
+        </div>
+
+        <!-- Worker Advisory Notice (Shown only if logged in as Operator) -->
+        <div class="worker-notice-banner" id="workerNoticeBanner" style="display: none;">
+          <span class="notice-icon">ℹ</span>
+          <span><strong>Operator Notice:</strong> You are viewing the What-If Sandbox in Advisory Mode. Disruption parameter injections require Plant Head authorization.</span>
+        </div>
+
+        <!-- Clearance Granted Banner (Shown when Operator gains access) -->
+        <div class="clearance-granted-banner" id="clearanceBannerSimulator" style="display:none;">
+          <span class="granted-icon">✔</span>
+          <div style="flex:1;">
+            <strong>CLEARANCE GRANTED // LEVEL 3 SIMULATOR UNLOCKED</strong>
+            <div style="font-size:0.75rem; opacity:0.85;">Authorized by Dr. Marcus Vance (Plant Head). You can now inject disruption parameters and observe downstream ripple effects.</div>
+          </div>
+          <span class="lock-tag" style="background:rgba(16,185,129,0.2); color:#6EE7B7; border-color:var(--status-green);">PERMIT ACTIVE</span>
+        </div>
+
+        <!-- FEATURE LOCK OVERLAY — shown for Operator; hidden for Head / on access grant -->
+        <div class="feature-lock-overlay" id="lockSimulator" data-feature="simulator" data-name="What-If Disruption Simulator" style="display:none;">
+          <div class="lock-card">
+            <div class="lock-icon-ring">🔒</div>
+            <span class="lock-badge">RESTRICTED // LEVEL 3 CLEARANCE REQUIRED</span>
+            <h3 class="lock-title">What-If Disruption Simulator Locked</h3>
+            <p class="lock-desc">
+              Direct manipulation of line speed parameters and simulated failure injection is restricted to <strong>Plant Operations Head</strong>. Operators require temporary clearance to test hypothetical disruptions.
+            </p>
+            <div style="display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap;">
+              <span class="lock-tag">Badge #OP-4082</span>
+              <span class="lock-tag">Disruption Governor</span>
+              <span class="lock-tag">Simulation Overrides</span>
+            </div>
+            <button class="btn-request-access" id="btnRequestSimulatorAccess">
+              <span>⚡ Request Clearance from Plant Head</span>
+            </button>
+            <div class="lock-pending-msg" id="lockPendingSimulator" style="display:none;">
+              ⏳ <strong>Request Pending:</strong> Sent to Dr. Marcus Vance. Waiting for authorization...
+            </div>
+          </div>
+        </div>
+
+        <div class="simulator-card" id="simulatorCardContent">
+          <div class="simulator-layout">
+            <div class="sim-controls-pane">
+              <div class="control-group">
+                <label for="simMachineSelect" class="control-label">
+                  <span class="control-number">1</span>
+                  <span>Select Target Machine to Disrupt:</span>
+                </label>
+                <select id="simMachineSelect" class="custom-select">
+                  <option value="M1">Machine 1: Raw Material Cutting (CNC Laser)</option>
+                  <option value="M2" selected>Machine 2: Material Processing (Hydraulic Stamping)</option>
+                  <option value="M3">Machine 3: Component Assembly (Robotic Fastening)</option>
+                  <option value="M4">Machine 4: Quality Inspection (Optical AOI)</option>
+                  <option value="M5">Machine 5: Final Packaging (Palletizing)</option>
+                </select>
+              </div>
+
+              <div class="control-group">
+                <div class="slider-label-row">
+                  <label for="simSlowdownSlider" class="control-label">
+                    <span class="control-number">2</span>
+                    <span>Slowdown Percentage:</span>
+                  </label>
+                  <span class="slider-val-badge" id="sliderValDisplay">+40%</span>
+                </div>
+                <input type="range" id="simSlowdownSlider" min="0" max="100" step="5" value="40" class="custom-range">
+                <div class="slider-ticks">
+                  <span class="tick" data-val="0">0% (Normal)</span>
+                  <span class="tick" data-val="25">25% (Warning)</span>
+                  <span class="tick" data-val="50">50% (Severe)</span>
+                  <span class="tick" data-val="100">100% (Halt)</span>
+                </div>
+              </div>
+
+              <div class="preset-pills-row">
+                <span class="preset-label">Quick Snap:</span>
+                <button class="btn-preset-pill" data-pct="15">+15% Monitor</button>
+                <button class="btn-preset-pill" data-pct="30">+30% Warning</button>
+                <button class="btn-preset-pill" data-pct="50">+50% Critical</button>
+                <button class="btn-preset-pill" data-pct="75">+75% Extreme</button>
+              </div>
+
+              <div class="control-group">
+                <div class="slider-label-row">
+                  <label for="simBufferSlider" class="control-label">
+                    <span class="control-number">3</span>
+                    <span>Intermediate WIP Buffer Stock:</span>
+                  </label>
+                  <span class="slider-val-badge badge-buffer" id="bufferValDisplay">12 Units</span>
+                </div>
+                <input type="range" id="simBufferSlider" min="0" max="30" step="2" value="12" class="custom-range range-buffer">
+                <div class="slider-ticks">
+                  <span>0 (Lean / Zero Buffer)</span>
+                  <span>15 Units (Standard)</span>
+                  <span>30 Units (High Safety)</span>
+                </div>
+              </div>
+
+              <!-- Thermal Anomaly & Operating Temperature Simulator -->
+              <div class="control-group" style="margin-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 1rem;">
+                <div class="slider-label-row">
+                  <label for="simTempSlider" class="control-label">
+                    <span class="control-number" style="background:linear-gradient(135deg, #F97316, #EF4444); color:#FFF;">🌡️</span>
+                    <span>Thermal Sensor Temperature:</span>
+                  </label>
+                  <span class="slider-val-badge" id="tempValDisplay" style="background:rgba(245,158,11,0.2); color:#FCD34D; border:1px solid rgba(245,158,11,0.4);">54.5°C (Nominal)</span>
+                </div>
+                <input type="range" id="simTempSlider" min="30" max="110" step="1" value="55" class="custom-range">
+                <div class="slider-ticks">
+                  <span id="tempTickMin">30°C (Cold)</span>
+                  <span id="tempTickNom" style="color:var(--status-green);">54.5°C (Nominal)</span>
+                  <span id="tempTickWarn" style="color:var(--status-yellow);">72°C (Throttle)</span>
+                  <span id="tempTickCrit" style="color:var(--status-red);">86°C+ (Overheat)</span>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:0.5rem; font-size:0.75rem;">
+                  <span id="thermalInducedDelayText" style="color:var(--cyan-primary); font-family:var(--font-mono); font-weight:700;">Thermal Delay Induced: +0%</span>
+                  <button type="button" class="btn-xs-ghost" id="btnCoolMachine" style="font-size:0.72rem; color:#6EE7B7; border:1px solid rgba(16,185,129,0.3); padding:0.2rem 0.5rem; border-radius:3px;">
+                    ❄️ Trigger Aux Chiller Loop
+                  </button>
+                </div>
+              </div>
+
+              <div class="sim-action-buttons">
+                <button id="btnRunSimulation" class="btn-primary-glow">
+                  <span class="btn-icon">⚡</span>
+                  <span>SIMULATE DISRUPTION</span>
+                </button>
+                <button id="btnResetSimulation" class="btn-secondary">
+                  <span class="btn-icon">↺</span>
+                  <span>Reset Baseline</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="sim-forecast-pane">
+              <h3 class="forecast-heading">Simulated Impact Forecast</h3>
+
+              <div class="forecast-metrics-grid">
+                <div class="forecast-box">
+                  <span class="forecast-label">Target Cycle Time</span>
+                  <div class="forecast-number text-red" id="forecastTargetCycle">21.0s</div>
+                  <span class="forecast-sub" id="forecastCycleDelta">+6.0s (+40%)</span>
+                </div>
+
+                <div class="forecast-box">
+                  <span class="forecast-label">Est. Line Throughput</span>
+                  <div class="forecast-number text-yellow" id="forecastLineRate">171 UPH</div>
+                  <span class="forecast-sub" id="forecastRateDelta">-29 Units/Hr (-14.5%)</span>
+                </div>
+
+                <div class="forecast-box">
+                  <span class="forecast-label">Downstream Starved</span>
+                  <div class="forecast-number text-red" id="forecastStarvedCount">3 Machines</div>
+                  <span class="forecast-sub">M3, M4, M5 affected</span>
+                </div>
+
+                <div class="forecast-box">
+                  <span class="forecast-label">Est. Financial Drag</span>
+                  <div class="forecast-number text-orange" id="forecastFinancial">$2,465 / hr</div>
+                  <span class="forecast-sub">At $85/unit margin</span>
+                </div>
+              </div>
+
+              <div class="forecast-comparison-table-wrapper">
+                <table class="forecast-table">
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Nominal Baseline</th>
+                      <th>Simulated Disruption</th>
+                      <th>Variance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Target Stage (M2)</td>
+                      <td>15.0 sec</td>
+                      <td id="tableSimCycle">21.0 sec</td>
+                      <td class="text-red" id="tableSimCycleDiff">+40.0%</td>
+                    </tr>
+                    <tr>
+                      <td>Line Bottleneck</td>
+                      <td>M3 (18.0s)</td>
+                      <td id="tableSimBottleneck">M2 (21.0s)</td>
+                      <td class="text-red">Shifted to M2</td>
+                    </tr>
+                    <tr>
+                      <td>Line Efficiency</td>
+                      <td>100.0%</td>
+                      <td id="tableSimOEE">85.5%</td>
+                      <td class="text-red" id="tableSimOEEDiff">-14.5%</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           FRAME 5: ROOT CAUSE REWIND & RECOMMENDATIONS
+           ===================================================================== -->
+      <section class="app-frame" id="frameRootCause">
+        <div class="frame-banner">
+          <div class="frame-banner-text">
+            <span class="frame-tag">FRAME 5 // DIAGNOSTICS &amp; MITIGATION</span>
+            <h2 class="frame-title">Root Cause Rewind &amp; Action Advisory</h2>
+            <p class="frame-desc">Automated causal back-tracing for plant supervisors with prioritized shop-floor mitigation steps.</p>
+          </div>
+          <div class="section-actions">
+            <button id="btnOpenDetailedReport" class="btn-ghost">
+              <span>📋 View Incident Briefing</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="root-cause-grid">
+          <div class="root-cause-card">
+            <div class="rewind-header">
+              <div class="rewind-badge">
+                <span class="rewind-icon">⚡</span>
+                <span>ANOMALY REWIND TRACE</span>
+              </div>
+              <div class="rewind-origin-badge" id="rewindOriginBadge">ORIGIN: NOMINAL</div>
+            </div>
+
+            <div class="rewind-diagnostic-body">
+              <div class="diagnostic-item">
+                <div class="diag-bullet diag-origin">1</div>
+                <div class="diag-content">
+                  <div class="diag-label">Disruption Epicenter</div>
+                  <div class="diag-value" id="rewindEpicenter">None detected. All 5 machines operating at baseline cycle times.</div>
+                </div>
+              </div>
+
+              <div class="diagnostic-item">
+                <div class="diag-bullet diag-why">2</div>
+                <div class="diag-content">
+                  <div class="diag-label">Trigger Anomaly Condition</div>
+                  <div class="diag-value" id="rewindTrigger">Cycle times within nominal ±0.0% variance threshold.</div>
+                </div>
+              </div>
+
+              <div class="diagnostic-item">
+                <div class="diag-bullet diag-cascade">3</div>
+                <div class="diag-content">
+                  <div class="diag-label">Downstream Blast Radius</div>
+                  <div class="diag-value" id="rewindCascade">0 downstream stages throttled. Line operating at 100% capacity.</div>
+                </div>
+              </div>
+
+              <div class="diagnostic-item">
+                <div class="diag-bullet diag-priority">4</div>
+                <div class="diag-content">
+                  <div class="diag-label">First Investigation Priority</div>
+                  <div class="diag-value" id="rewindPriority">Continue scheduled preventative monitoring on all stages.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="recommendations-card">
+            <div class="recommendations-header">
+              <div class="rec-title-group">
+                <span class="rec-icon">🛠</span>
+                <h3 class="card-title">Shop-Floor Mitigation Recommendations</h3>
+              </div>
+              <span class="rec-disclaimer-pill">Simulated Decision Support</span>
+            </div>
+
+            <div class="recommendations-list" id="recommendationsList">
+              <!-- Dynamically populated by JS based on condition -->
+            </div>
+
+            <div class="rec-footer-disclaimer">
+              <span class="disclaimer-icon">ℹ</span>
+              <span>Simulated advisory for operational decision support. Actions must be physically verified by plant personnel.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           FRAME 6: TELEMETRY CHARTS & ANALYTICS
+           ===================================================================== -->
+      <section class="app-frame" id="frameAnalytics">
+        <div class="frame-banner">
+          <div class="frame-banner-text">
+            <span class="frame-tag">FRAME 6 // TELEMETRY &amp; HISTORICAL</span>
+            <h2 class="frame-title">Performance Analytics &amp; Machine Charts</h2>
+            <p class="frame-desc">Comparative cycle times, workload capacity utilization, and hourly output curves (100% offline canvas).</p>
+          </div>
+          <div class="chart-toggles">
+            <span class="chart-badge">Dynamic Canvas Engine (Offline Native)</span>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title-group">
+                <span class="chart-icon">⏱</span>
+                <h3 class="chart-title">Processing Time Comparison (Seconds / Unit)</h3>
+              </div>
+              <div class="chart-legend-pills">
+                <span class="pill-legend pill-cyan"><span class="dot-swatch swatch-cyan"></span> Nominal</span>
+                <span class="pill-legend pill-red"><span class="dot-swatch swatch-red"></span> Simulated</span>
+              </div>
+            </div>
+            <div class="canvas-container">
+              <canvas id="chartCycleTimes" width="600" height="260"></canvas>
+            </div>
+            <div class="chart-footer-caption">
+              <span>Bars indicate cycle time per unit. Spikes above nominal represent delays inducing downstream starvation.</span>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title-group">
+                <span class="chart-icon">📈</span>
+                <h3 class="chart-title">Machine Workload &amp; Capacity Utilization (%)</h3>
+              </div>
+              <div class="chart-legend-pills">
+                <span class="pill-legend pill-green">Safe (&lt;80%)</span>
+                <span class="pill-legend pill-yellow">Heavy (80-90%)</span>
+                <span class="pill-legend pill-red">Overloaded (&gt;90%)</span>
+              </div>
+            </div>
+            <div class="canvas-container">
+              <canvas id="chartWorkload" width="600" height="260"></canvas>
+            </div>
+            <div class="chart-footer-caption">
+              <span>Disrupted machines spike to peak capacity; downstream starved machines drop into idle waiting states.</span>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title-group">
+                <span class="chart-icon">📦</span>
+                <h3 class="chart-title">Hourly Production Output Capacity (Units / Hour)</h3>
+              </div>
+              <div class="chart-legend-pills">
+                <span class="pill-legend pill-blue">Nominal Target</span>
+                <span class="pill-legend pill-yellow">Simulated Rate</span>
+              </div>
+            </div>
+            <div class="canvas-container">
+              <canvas id="chartThroughput" width="600" height="260"></canvas>
+            </div>
+            <div class="chart-footer-caption">
+              <span>Demonstrates Theory of Constraints: total line output is governed by the single slowest active stage.</span>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title-group">
+                <span class="chart-icon">🔋</span>
+                <h3 class="chart-title">WIP Intermediate Buffer Levels (Units in Queue)</h3>
+              </div>
+              <div class="chart-legend-pills">
+                <span class="pill-legend pill-cyan">Current Stock</span>
+                <span class="pill-legend pill-gray">Max Buffer</span>
+              </div>
+            </div>
+            <div class="canvas-container">
+              <canvas id="chartBuffers" width="600" height="260"></canvas>
+            </div>
+            <div class="chart-footer-caption">
+              <span>Upstream buffer builds up (backpressure risk); downstream buffers deplete towards zero (starvation).</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           FRAME 7: EARLY WARNING ALERTS & AUDIT LOG
+           ===================================================================== -->
+      <section class="app-frame" id="frameAlerts">
+        <div class="frame-banner">
+          <div class="frame-banner-text">
+            <span class="frame-tag">FRAME 7 // ALARM ESCALATION</span>
+            <h2 class="frame-title">Early Warning System &amp; Telemetry Alarms</h2>
+            <p class="frame-desc">Configurable threshold rules with real-time operational logging and automated severity classifications.</p>
+          </div>
+          <div class="alert-thresholds-guide">
+            <span class="thresh-pill thresh-normal">&lt;10% Normal</span>
+            <span class="thresh-pill thresh-monitor">10-20% Monitor</span>
+            <span class="thresh-pill thresh-warning">20-40% Warning</span>
+            <span class="thresh-pill thresh-critical">&gt;40% Critical</span>
+          </div>
+        </div>
+
+        <div class="alerts-layout">
+          <div class="alerts-feed-card">
+            <div class="alerts-feed-header">
+              <div class="feed-title-wrapper">
+                <span class="feed-icon">🚨</span>
+                <h3 class="card-title">Live Anomaly &amp; Ripple Alarm Log</h3>
+                <span class="feed-count-badge" id="liveAlertsCount">0 Alerts</span>
+              </div>
+              <div class="feed-actions">
+                <button id="btnClearAlerts" class="btn-xs-ghost">Clear Log</button>
+              </div>
+            </div>
+
+            <div class="alerts-feed-list" id="alertsFeedList">
+              <!-- Dynamic Alert Cards rendered by JS -->
+            </div>
+          </div>
+
+          <div class="thresholds-reference-card">
+            <h3 class="ref-title">System Rule Engine Thresholds</h3>
+            <p class="ref-sub">Configurable industrial rules governing automatic alarm escalation and ripple forecasts.</p>
+
+            <div class="threshold-step-list">
+              <div class="threshold-step-item step-normal">
+                <div class="step-indicator"></div>
+                <div class="step-body">
+                  <div class="step-label">NORMAL OPERATING ZONE (&lt; 10% DELAY)</div>
+                  <div class="step-desc">Machine cycle times fluctuate within natural operational tolerance. Buffers absorb transient spikes.</div>
+                </div>
+              </div>
+
+              <div class="threshold-step-item step-monitor">
+                <div class="step-indicator"></div>
+                <div class="step-body">
+                  <div class="step-label">MONITOR ZONE (10% – 20% DELAY)</div>
+                  <div class="step-desc">Advisory flag. Downstream buffers begin slow drainage. Shift supervisors notified.</div>
+                </div>
+              </div>
+
+              <div class="threshold-step-item step-warning">
+                <div class="step-indicator"></div>
+                <div class="step-body">
+                  <div class="step-label">WARNING ZONE (20% – 40% DELAY)</div>
+                  <div class="step-desc">Significant bottleneck. Immediate successor enters starvation risk within 10-15 minutes.</div>
+                </div>
+              </div>
+
+              <div class="threshold-step-item step-critical">
+                <div class="step-indicator"></div>
+                <div class="step-body">
+                  <div class="step-label">CRITICAL DISRUPTION ZONE (&gt; 40% DELAY)</div>
+                  <div class="step-desc">Line bottleneck shifted. Full cascade propagation throttles total plant output. Immediate floor action required.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           FRAME 8: INCIDENT REPORTS & AUDIT BRIEFS
+           ===================================================================== -->
+      <section class="app-frame" id="frameReports">
+        <div class="frame-banner">
+          <div class="frame-banner-text">
+            <span class="frame-tag">FRAME 8 // DOCUMENTATION &amp; AUDIT</span>
+            <h2 class="frame-title">Production Line Incident Reports &amp; Shift Briefs</h2>
+            <p class="frame-desc">Executive incident summaries, shift handover reports, and telemetry data export tools.</p>
+          </div>
+          <div class="section-actions">
+            <button id="btnFrameOpenModal" class="btn-primary-glow">
+              <span>📋 Open Printable Incident Modal</span>
+            </button>
+            <button id="btnFrameExportCsv" class="btn-secondary">
+              <span>📥 Download CSV Audit Log</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Clearance Granted Banner for Reports -->
+        <div class="clearance-granted-banner" id="clearanceBannerReports" style="display:none;">
+          <span class="granted-icon">✔</span>
+          <div style="flex:1;">
+            <strong>CLEARANCE GRANTED // OFFICIAL AUDIT EXPORT UNLOCKED</strong>
+            <div style="font-size:0.75rem; opacity:0.85;">Authorized by Dr. Marcus Vance. Full incident logging, compliance briefs, and CSV telemetry extraction enabled.</div>
+          </div>
+          <span class="lock-tag" style="background:rgba(16,185,129,0.2); color:#6EE7B7; border-color:var(--status-green);">PERMIT ACTIVE</span>
+        </div>
+
+        <!-- Lock Overlay for Reports (Shown to Operator without clearance) -->
+        <div class="feature-lock-overlay" id="lockReports" data-feature="reports" data-name="Official Incident Reports & Audit Export" style="display:none;">
+          <div class="lock-card">
+            <div class="lock-icon-ring">🔒</div>
+            <span class="lock-badge">RESTRICTED // EXECUTIVE COMPLIANCE ONLY</span>
+            <h3 class="lock-title">Official Incident &amp; Audit Reports Locked</h3>
+            <p class="lock-desc">
+              Generating regulatory shift incident briefs, signing ISO compliance documents, and downloading raw audit telemetry requires Plant Head administrative credentials.
+            </p>
+            <div style="display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap;">
+              <span class="lock-tag">ISO 22400 Sign-off</span>
+              <span class="lock-tag">CSV Audit Data</span>
+              <span class="lock-tag">Shift Briefs</span>
+            </div>
+            <button class="btn-request-access" id="btnRequestReportsAccess">
+              <span>⚡ Request Clearance to Export Incident Reports</span>
+            </button>
+            <div class="lock-pending-msg" id="lockPendingReports" style="display:none;">
+              ⏳ <strong>Request Pending:</strong> Sent to Dr. Marcus Vance. Waiting for authorization...
+            </div>
+          </div>
+        </div>
+
+        <!-- Embedded Full Executive Incident Briefing Frame -->
+        <div class="reports-container-card" id="reportsCardContent">
+          <div class="printable-report" id="frameReportContent">
+            <!-- Dynamically populated report content -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Side Inspector Drawer (Deep-Dive Machine Telemetry) -->
+    <aside class="machine-drawer" id="machineDrawer" aria-hidden="true">
+      <div class="drawer-header">
+        <div class="drawer-title-group">
+          <span class="drawer-badge" id="drawerMachineId">M1</span>
+          <div>
+            <h3 class="drawer-machine-name" id="drawerMachineName">Raw Material Cutting</h3>
+            <span class="drawer-machine-role" id="drawerMachineRole">Upstream Stage</span>
+          </div>
+        </div>
+        <button class="drawer-close-btn" id="drawerCloseBtn" aria-label="Close Drawer">&times;</button>
+      </div>
+
+      <div class="drawer-body">
+        <div class="drawer-status-banner" id="drawerStatusBanner">
+          <span class="drawer-status-dot" id="drawerStatusDot"></span>
+          <span class="drawer-status-text" id="drawerStatusText">NORMAL OPERATION</span>
+        </div>
+
+        <div class="drawer-metrics-grid">
+          <div class="drawer-metric-box">
+            <span class="d-metric-lbl">Nominal Cycle</span>
+            <span class="d-metric-val" id="dNominalCycle">12.0s</span>
+          </div>
+          <div class="drawer-metric-box">
+            <span class="d-metric-lbl">Current Cycle</span>
+            <span class="d-metric-val text-cyan" id="dCurrentCycle">12.0s</span>
+          </div>
+          <div class="drawer-metric-box">
+            <span class="d-metric-lbl">Workload</span>
+            <span class="d-metric-val" id="dWorkload">75%</span>
+          </div>
+          <div class="drawer-metric-box">
+            <span class="d-metric-lbl">Total Output</span>
+            <span class="d-metric-val" id="dOutputCount">1,420 units</span>
+          </div>
+        </div>
+
+        <div class="drawer-section">
+          <h4 class="drawer-subhead">Topology Connections</h4>
+          <div class="d-topology-row">
+            <div class="d-topo-box">
+              <span class="d-topo-lbl">Receives From:</span>
+              <span class="d-topo-val" id="dUpstreamSource">Raw Stock Silo</span>
+            </div>
+            <span class="d-topo-arrow">➔</span>
+            <div class="d-topo-box">
+              <span class="d-topo-lbl">Feeds To:</span>
+              <span class="d-topo-val" id="dDownstreamTarget">M2 Material Processing</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="drawer-section">
+          <div class="d-flex-between">
+            <h4 class="drawer-subhead">Output Buffer Level</h4>
+            <span class="d-buffer-count" id="dBufferCount">14 / 20 Units</span>
+          </div>
+          <div class="drawer-progress">
+            <div class="drawer-progress-fill" id="dBufferFill" style="width: 70%;"></div>
+          </div>
+        </div>
+
+        <div class="drawer-section">
+          <h4 class="drawer-subhead">Simulated Physical Telemetry</h4>
+          <div class="d-specs-list" id="dSpecsList">
+            <!-- Dynamic specs list -->
+          </div>
+        </div>
+
+        <div class="drawer-section drawer-tester-box">
+          <h4 class="drawer-subhead">Test Machine Disruption</h4>
+          <p class="drawer-hint">Apply isolated slowdown to this specific machine to test ripple effects:</p>
+          <div class="slider-label-row">
+            <label for="drawerSlowdownSlider" class="control-label">Slowdown:</label>
+            <span class="slider-val-badge" id="drawerSlowdownVal">+0%</span>
+          </div>
+          <input type="range" id="drawerSlowdownSlider" min="0" max="100" step="5" value="0" class="custom-range">
+          <div class="d-flex-gap-mt">
+            <button id="btnApplyDrawerSlowdown" class="btn-primary-small">Apply to Line</button>
+            <button id="btnResetDrawerSlowdown" class="btn-secondary-small">Reset Machine</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Incident Report Modal (Printable) -->
+    <div class="modal-backdrop" id="reportModal" aria-hidden="true">
+      <div class="modal-container">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="modal-badge">FACTORY PULSE // INCIDENT BRIEF</span>
+            <h3 class="modal-title">Production Line Disruption &amp; Ripple Report</h3>
+          </div>
+          <button class="modal-close-btn" id="modalCloseBtn">&times;</button>
+        </div>
+
+        <div class="modal-body printable-report" id="reportContent">
+          <!-- Dynamic report content generated in JS -->
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" id="btnPrintReport">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 6 2 18 2 18 9"></polyline>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+              <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            Print / Export PDF
+          </button>
+          <button class="btn-primary" id="btnDismissReport">Close Brief</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Judge Walkthrough Tour Modal -->
+    <div class="tour-backdrop" id="judgeTourModal" aria-hidden="true">
+      <div class="tour-card" id="tourCard">
+        <div class="tour-header">
+          <div class="tour-step-badge" id="tourStepBadge">WALKTHROUGH: STEP 1 OF 4</div>
+          <button class="tour-close-btn" id="tourCloseBtn" aria-label="Exit Walkthrough">&times;</button>
+        </div>
+        <div class="tour-body">
+          <h3 class="tour-title" id="tourTitle">1. Baseline Nominal Factory Operation</h3>
+          <p class="tour-description" id="tourDesc">
+            Notice the Factory Floor Overview. All 5 interconnected stages are operating at 100% nominal capacity. Total throughput is 200 Units/Hour, governed by Machine 3 Assembly (the nominal line benchmark).
+          </p>
+          <div class="tour-callout" id="tourCallout">
+            <strong>Key Insight for Judges:</strong> Nominal conditions maintain healthy WIP buffers and zero downstream starvation.
+          </div>
+        </div>
+        <div class="tour-footer">
+          <button class="btn-secondary-small" id="tourPrevBtn" disabled>⮜ Previous</button>
+          <div class="tour-dots" id="tourDots">
+            <span class="tour-dot active"></span>
+            <span class="tour-dot"></span>
+            <span class="tour-dot"></span>
+            <span class="tour-dot"></span>
+          </div>
+          <button class="btn-primary-small" id="tourNextBtn">Next Step ⮞</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         MODALS & ACCESS CONTROL SYSTEM
+         ========================================================================= -->
+
+    <!-- 1. Operator Request Access Modal -->
+    <div class="modal-backdrop" id="requestAccessModal" aria-hidden="true" style="display: none;">
+      <div class="modal-container" style="max-width: 540px;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="modal-badge" style="background:linear-gradient(135deg, #F59E0B, #D97706); color:#000;">SECURITY GATEWAY // ACCESS REQUEST</span>
+            <h3 class="modal-title">Request Elevated Clearance</h3>
+          </div>
+          <button class="modal-close-btn" id="closeRequestAccessModalBtn">&times;</button>
+        </div>
+        <div class="modal-body" style="display:flex; flex-direction:column; gap:1rem;">
+          <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius-sm); padding:0.85rem;">
+            <div style="font-size:0.75rem; color:var(--text-muted);">TARGET FEATURE:</div>
+            <div style="font-family:var(--font-heading); font-size:1.1rem; color:#FFF; font-weight:700;" id="reqModalFeatureTitle">What-If Disruption Simulator</div>
+            <div style="font-family:var(--font-mono); font-size:0.7rem; color:var(--cyan-primary); margin-top:0.25rem;">REQUIRES: Plant Head Level 3 Authorization</div>
+          </div>
+
+          <div>
+            <label style="display:block; font-family:var(--font-mono); font-size:0.75rem; color:var(--text-secondary); margin-bottom:0.4rem;">
+              Requester Profile:
+            </label>
+            <div style="font-size:0.85rem; color:#FFF; background:rgba(0,0,0,0.4); padding:0.6rem 0.85rem; border-radius:var(--radius-sm); border:1px solid rgba(255,255,255,0.06);">
+              👷 Alex Chen — Floor Operator (Badge #OP-4082)
+            </div>
+          </div>
+
+          <div>
+            <label for="reqAccessReasonInput" style="display:block; font-family:var(--font-mono); font-size:0.75rem; color:var(--text-secondary); margin-bottom:0.4rem;">
+              Operational Justification (Sent to Plant Head Dr. Marcus Vance):
+            </label>
+            <textarea id="reqAccessReasonInput" class="form-input" rows="3" style="width:100%; box-sizing:border-box; resize:vertical; font-family:var(--font-sans); font-size:0.82rem;" placeholder="e.g. Need to simulate M2 hydraulic slowdown to verify buffer depletion before scheduled die replacement..."></textarea>
+          </div>
+
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button type="button" class="btn-preset-pill btn-quick-reason" data-reason="Testing upstream buffer drainage rate for M2 maintenance window.">Buffer drainage test</button>
+            <button type="button" class="btn-preset-pill btn-quick-reason" data-reason="Simulating optical camera latency on M4 to evaluate defect divert queue.">M4 camera test</button>
+            <button type="button" class="btn-preset-pill btn-quick-reason" data-reason="Cross-checking Theory of Constraints bottleneck shift to M3.">Bottleneck verification</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" id="btnCancelAccessRequest">Cancel</button>
+          <button class="btn-request-access" id="btnSubmitAccessRequest" style="margin:0;">
+            <span>📨 Dispatch Request to Plant Head</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Plant Head Access Requests Inbox Modal -->
+    <div class="modal-backdrop" id="headInboxModal" aria-hidden="true" style="display: none;">
+      <div class="modal-container" style="max-width: 650px;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="modal-badge" style="background:linear-gradient(135deg, #00F0FF, #0070F3); color:#000;">PLANT HEAD COMMAND // AUTHORIZATIONS</span>
+            <h3 class="modal-title">Clearance Requests &amp; Dispatch Inbox</h3>
+          </div>
+          <button class="modal-close-btn" id="closeHeadInboxModalBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center;">
+            <span>Pending operator requests for elevated administrative functions:</span>
+            <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--cyan-primary);" id="inboxPendingSummary">0 Pending</span>
+          </div>
+          <div class="inbox-requests-list" id="inboxRequestsList">
+            <!-- Dynamic request cards populated by JS -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" id="btnCloseHeadInbox">Dismiss</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Floating Shop-Floor Intercom & Live Message Box -->
+    <button class="shopfloor-intercom-pill" id="shopfloorIntercomPill" title="Open Shopfloor Intercom / Direct Comms with Plant Head">
+      <span>💬</span>
+      <span>Intercom Comms</span>
+      <span class="intercom-unread-pill" id="intercomUnreadBadge" style="display:none;">1</span>
+    </button>
+
+    <div class="intercom-window" id="shopfloorIntercomWindow" style="display: none;">
+      <div class="intercom-header">
+        <div class="intercom-header-info">
+          <div class="intercom-title">⚡ LINE 04 SECURE INTERCOM</div>
+          <div class="intercom-subtitle" id="intercomChannelSub">Operator Alex Chen ⇄ Plant Head Dr. Vance</div>
+        </div>
+        <button class="intercom-close-btn" id="closeIntercomBtn" title="Minimize Intercom">&times;</button>
+      </div>
+
+      <div class="intercom-messages-list" id="intercomMessagesList">
+        <!-- Messages rendered by JS -->
+      </div>
+
       <div class="intercom-quick-prompts">
         <button class="btn-intercom-prompt" data-msg="Status report: Line pace nominal, buffer levels stable.">✔ Line Nominal</button>
         <button class="btn-intercom-prompt" data-msg="Requesting authorization to test M2 hydraulic slowdown.">🔒 Request Clearance</button>
         <button class="btn-intercom-prompt" data-msg="Laser temperature on M1 stabilized after nozzle purge.">Laser OK</button>
       </div>
+
       <form class="intercom-input-bar" id="intercomChatForm">
         <input type="text" class="intercom-input" id="intercomTextInput" placeholder="Type message to channel..." autocomplete="off">
         <button type="submit" class="btn-intercom-send">Send ➔</button>
       </form>
     </div>
+
     <!-- 4. Global Floating Live Toast Container -->
     <div class="live-toast-container" id="liveToastContainer"></div>
+
     <!-- Footer -->
     <footer class="app-footer">
       <div class="footer-container">
@@ -34,6 +1532,7 @@
       </div>
     </footer>
   </div>
+
   <!-- Main JavaScript File -->
   <script src="script.js"></script>
 </body>
